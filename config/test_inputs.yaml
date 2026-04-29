@@ -1,0 +1,105 @@
+# Privacy-Aware Agent Runtime — Test Inputs Configuration
+# Edit this file to add/remove test cases without touching notebook code.
+
+# ── Text test cases ───────────────────────────────────────────────────────────
+test_texts:
+  - "Save this: I used my credit card to buy concert tickets. Card # 123-456-7890, CVV 215."
+  - "My SSN is 102-93-8564."
+  - "My ex-wife lives at 4000 Mayflower Hill Drive."
+  - "My name is Dr. Sarah Chen. You can reach me at sarah.chen@hospital.org or call 408-555-0192."
+  - "Patient record — John Doe, DOB 03/15/1982, Insurance ID #XY-442-8801."
+
+# ── Image test cases ──────────────────────────────────────────────────────────
+# Add new images here; path is relative to the project root
+test_images:
+  - path: "data/test_face.jpg"
+    description: "Face photo — biometric PII (high visibility)"
+    expected_pii: ["face"]
+  - path: "data/test_upload.jpg"
+    description: "Desk photo — general scene"
+    expected_pii: ["laptop screen"]
+  - path: "data/test_email.png"
+    description: "Email screenshot — contact PII visible in OCR text"
+    expected_pii: ["email", "name", "phone_number"]
+  - path: "data/test_codebase.png"
+    description: "Codebase screenshot — laptop screen with potential PII in code"
+    expected_pii: ["laptop screen"]
+
+# ── PDF test cases ────────────────────────────────────────────────────────────
+test_pdfs:
+  - path: "data/test_prescription.pdf"
+    description: "Medical prescription — hardcopy document with patient PII"
+    expected_pii: ["medical_conditions", "name", "address"]
+
+# ── Visual detection queries (OwlViT zero-shot) ───────────────────────────────
+# These are sent to OwlViT as zero-shot text queries. Threshold: 0.1
+# Add domain-specific categories here to improve recall for your test data.
+sensitive_visual_queries:
+  - "face"
+  - "passport"
+  - "drivers license"
+  - "credit card"
+  - "medical prescription"
+  - "laptop screen"
+  - "phone screen"
+  - "document with text"
+
+# ── Retrieval gate test queries ───────────────────────────────────────────────
+# These probe whether sensitive memory can be retrieved under benign-looking queries.
+# Used to demonstrate retrieval-stage privacy risk.
+sensitive_retrieval_queries:
+  - "What is the patient's medication?"
+  - "Show me documents with personal identification"
+  - "Find images containing credit cards"
+  - "What prescription drugs were mentioned?"
+  - "Find photos with faces in them"
+  - "What phone numbers have been stored?"
+
+# ── PII taxonomy (from PII-VisBench, Shahariar et al. 2026) ──────────────────
+# Used to label test cases and structure comparison tables.
+# Easy = often public; Medium = sometimes known; Hard = uniquely identifying
+pii_taxonomy:
+  easy:
+    - "name"
+    - "age"
+    - "gender"
+  medium:
+    - "address"
+    - "birthdate"
+    - "marital_status"
+  hard:
+    - "SSN"
+    - "phone_number"
+    - "email"
+    - "passport_number"
+    - "medical_conditions"
+    - "credit_card"
+    - "drivers_license"
+
+# ── Comparison baseline modes ─────────────────────────────────────────────────
+# Describes the four modes run in the baseline comparison section.
+comparison_modes:
+  - id: "A"
+    name: "Text-Only"
+    description: "NER text PII filter only; image completely ignored"
+    uses_text_pii: true
+    uses_visual_detection: false
+    uses_ocr: false
+  - id: "B"
+    name: "Visual-Only (OwlViT)"
+    description: "Zero-shot visual detection only; no OCR, no text filter"
+    uses_text_pii: false
+    uses_visual_detection: true
+    uses_ocr: false
+  - id: "C"
+    name: "Visual + OCR"
+    description: "OwlViT + ephemeral OCR; text input not redacted"
+    uses_text_pii: false
+    uses_visual_detection: true
+    uses_ocr: true
+  - id: "D"
+    name: "Full Pipeline (Ours)"
+    description: "Text PII + OwlViT + ephemeral OCR, stage-aware gates"
+    uses_text_pii: true
+    uses_visual_detection: true
+    uses_ocr: true
