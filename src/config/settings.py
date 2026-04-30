@@ -7,7 +7,13 @@ load_dotenv(override=True)
 
 _PROJECT_ROOT = Path(__file__).parent.parent.parent
 
-OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+try:            
+      from google.colab import userdata
+      _colab_openai = userdata.get("OPENAI_API_KEY")
+except Exception:                                                                       
+      _colab_openai = None
+                                                                                          
+PENAI_API_KEY: str = _colab_openai or os.getenv("OPENAI_API_KEY", "")
 
 # GCS — required for full BIV-Priv URL exposure demo; optional for text-only retrieval
 GCS_BUCKET_NAME: str = os.getenv("GCS_BUCKET_NAME", "")
