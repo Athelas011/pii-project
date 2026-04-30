@@ -1,0 +1,145 @@
+{
+  "person_1": {
+    "A1": {
+      "file": "person_1/A1.png",
+      "label": "face",
+      "category": "identity_document"
+    },
+    "A2": {
+      "file": "person_1/A2.png",
+      "label": "fingerprint",
+      "category": "identity_document"
+    },
+    "B": {
+      "file": "person_1/B.png",
+      "label": "identity_card",
+      "category": "identity_document"
+    },
+    "C": {
+      "file": "person_1/C.png",
+      "label": "medical_report",
+      "category": "medical"
+    },
+    "D1": {
+      "file": "person_1/D1.png",
+      "label": "tax_document",
+      "category": "identity_document"
+    },
+    "D2": {
+      "file": "person_1/D2.png",
+      "label": "credit_card",
+      "category": "financial"
+    },
+    "E": {
+      "file": "person_1/D3.png",
+      "label": "payslip",
+      "category": "financial"
+    },
+    "F": {
+      "file": "person_1/E.png",
+      "label": "flight_ticket",
+      "category": "identity_document"
+    },
+    "H": {
+      "file": "person_1/F.png",
+      "label": "drivers_license",
+      "category": "identity_document"
+    }
+  },
+
+  "person_2": {
+    "A1": {
+      "file": "person_2/A1.png",
+      "label": "face",
+      "category": "identity_document"
+    },
+    "A2": {
+      "file": "person_2/A2.png",
+      "label": "fingerprint",
+      "category": "identity_document"
+    },
+    "B": {
+      "file": "person_2/B.png",
+      "label": "identity_card",
+      "category": "identity_document"
+    },
+    "C": {
+      "file": "person_2/C.png",
+      "label": "medical_report",
+      "category": "medical"
+    },
+    "D1": {
+      "file": "person_2/D1.png",
+      "label": "tax_document",
+      "category": "identity_document"
+    },
+    "D2": {
+      "file": "person_2/D2.png",
+      "label": "credit_card",
+      "category": "financial"
+    },
+    "E": {
+      "file": "person_2/D3.png",
+      "label": "payslip",
+      "category": "financial"
+    },
+    "F": {
+      "file": "person_2/E.png",
+      "label": "flight_ticket",
+      "category": "identity_document"
+    },
+    "H": {
+      "file": "person_2/F.png",
+      "label": "drivers_license",
+      "category": "identity_document"
+    }
+  },
+
+  "person_3": {
+    "A1": {
+      "file": "person_3/A1.png",
+      "label": "face",
+      "category": "identity_document"
+    },
+    "A2": {
+      "file": "person_3/A2.png",
+      "label": "fingerprint",
+      "category": "identity_document"
+    },
+    "B": {
+      "file": "person_3/B.png",
+      "label": "identity_card",
+      "category": "identity_document"
+    },
+    "C": {
+      "file": "person_3/C.png",
+      "label": "medical_report",
+      "category": "medical"
+    },
+    "D1": {
+      "file": "person_3/D1.png",
+      "label": "tax_document",
+      "category": "identity_document"
+    },
+    "D2": {
+      "file": "person_3/D2.png",
+      "label": "credit_card",
+      "category": "financial"
+    },
+    "E": {
+      "file": "person_3/D3.png",
+      "label": "payslip",
+      "category": "financial"
+    },
+    "F": {
+      "file": "person_3/E.png",
+      "label": "flight_ticket",
+      "category": "identity_document"
+    },
+    "H": {
+      "file": "person_3/F.png",
+      "label": "drivers_license",
+      "category": "identity_document"
+    }
+  }
+}

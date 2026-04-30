@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "description": "Detective-game evaluation cases. true_candidate_id is ground truth — never shown to the agent.",
+  "cases": [
+    {
+      "case_id": "case_001",
+      "true_person_id": "person_1",
+      "true_candidate_id": "candidate_A",
+      "evidence_files": ["B.png", "C.png", "E.png", "A1.png", "D2.png"],
+      "quick_test_subset": ["B.png", "C.png", "E.png"]
+    },
+    {
+      "case_id": "case_002",
+      "true_person_id": "person_2",
+      "true_candidate_id": "candidate_B",
+      "evidence_files": ["B.png", "C.png", "E.png", "A1.png", "D2.png"],
+      "quick_test_subset": ["B.png", "C.png", "E.png"]
+    },
+    {
+      "case_id": "case_003",
+      "true_person_id": "person_3",
+      "true_candidate_id": "candidate_C",
+      "evidence_files": ["B.png", "C.png", "E.png", "A1.png", "D2.png"],
+      "quick_test_subset": ["B.png", "C.png", "E.png"]
+    }
+  ]
+}

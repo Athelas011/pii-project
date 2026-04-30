@@ -1,0 +1,14 @@
+{
+  "candidate_A": {
+    "true_person_id": "person_1",
+    "profile": "Candidate A is a woman in her early thirties who currently lives in a mid-sized city in the state of Illinois, in the United States. She recently traveled internationally, with her itinerary involving a connection through Beijing. She has an evident interest in photography and consumer electronics — her recent purchases include camera accessories, leather goods, and imported specialty food items. A routine internal imaging examination was conducted and returned entirely normal results. Her income places her in a moderate professional bracket, and she receives a year-end bonus. She tends to be photographed in the company of close friends."
+  },
+  "candidate_B": {
+    "true_person_id": "person_2",
+    "profile": "Candidate B is a woman in her early thirties who resides on one of the most famous boulevards in the German capital. She recently made a direct international flight between Frankfurt and Shanghai, suggesting active ties with East Asia, whether professional or personal. Her spending patterns reflect a preference for practical domestic investment — recent purchases include kitchen appliances, home décor, and outdoor equipment. She underwent a standard lipid and cholesterol screening, with all results within healthy ranges. Her professional compensation package is in the upper-middle tier. She is typically pictured alongside professional colleagues."
+  },
+  "candidate_C": {
+    "true_person_id": "person_3",
+    "profile": "Candidate C is a woman in her early thirties based in a central district of Beijing. She recently traveled from Shanghai to Singapore, pointing to regional activity in Southeast Asia. Her lifestyle strongly reflects an interest in personal fashion — her recent expenditures include cosmetics, a designer handbag, and shoes. She had a routine dental examination, which confirmed entirely healthy oral conditions. Her total compensation, including salary, allowances, and annual bonus, reflects a comfortable financial position. She is commonly photographed in the company of family members, specifically siblings."
+  }
+}
