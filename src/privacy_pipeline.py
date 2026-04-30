@@ -148,11 +148,14 @@ def initialize_models(
         _SENSITIVE_QUERIES = visual_queries
 
     # 1. Text PII filter
+    # trust_remote_code=True is required: openai/privacy-filter uses a custom
+    # architecture (openai_privacy_filter) not registered in transformers by default.
     _pii_filter = pipeline(
         task="token-classification",
         model="openai/privacy-filter",
         aggregation_strategy="simple",
         device=0 if _device == "cuda" else -1,
+        trust_remote_code=True,
     )
 
     # 2. Ephemeral OCR reader
