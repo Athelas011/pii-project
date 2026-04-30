@@ -445,10 +445,7 @@ def privacy_gate_and_embed(
     image: Image.Image | None = None,
     redacted_text: str = "",
     sensitive_boxes: list[list[int]] | None = None,
-    inpaint_size: tuple[int, int] = _INPAINT_SIZE,
     mask_threshold: float = 0.30,
-    inpaint_steps: int = 20,
-    inpaint_prompt: str = "neutral background, empty space, seamless texture",
 ) -> tuple[PolicyType, Image.Image | None, str, dict, str]:
     """Policy engine and memory write gate.
 
@@ -460,18 +457,14 @@ def privacy_gate_and_embed(
       TEXT_ONLY     — text present, no image
       INVALID_IMAGE — image with zero area
       ALLOW         — sensitive_ratio == 0
-      MASK          — 0 < sensitive_ratio < mask_threshold: inpaint boxes
+      MASK          — 0 < sensitive_ratio < mask_threshold: paint boxes solid black
       ABSTRACT      — sensitive_ratio >= mask_threshold: block image
 
     Args:
         image: PIL RGB image or None.
         redacted_text: Already-redacted text string.
         sensitive_boxes: List of [xmin, ymin, xmax, ymax] boxes.
-        inpaint_size: SD inpainting canvas size. Default (768, 768).
-                      Pass (512, 512) if speed matters more than quality.
         mask_threshold: Area ratio above which ABSTRACT replaces MASK.
-        inpaint_steps: Number of diffusion steps.
-        inpaint_prompt: Prompt passed to the inpainting model.
 
     Returns:
         (policy, final_image, abstract_summary, embeddings, redacted_text)
@@ -522,46 +515,19 @@ def privacy_gate_and_embed(
 
     # ── MASK ───────────────────────────────────────────────────────────────────
     elif sensitive_ratio < mask_threshold:
-        if _inpaint_pipe is None:
-            # Inpainter not loaded — fall back to ABSTRACT
-            print(
-                f"  [WARNING] MASK requested but inpainter not loaded "
-                f"(coverage {sensitive_ratio:.1%}). Falling back to ABSTRACT."
-            )
-            policy = "ABSTRACT"
-            final_image = None
-            summary = (
-                "ABSTRACT SEMANTIC SUMMARY: Image suppressed "
-                "(inpainter unavailable — loaded with load_inpainter=False)."
-            )
-        else:
-            policy = "MASK"
-            print(
-                f"  [MASK] Sensitive coverage {sensitive_ratio:.1%} — "
-                f"running local inpainting at {inpaint_size[0]}×{inpaint_size[1]}..."
-            )
-            # Build binary mask: white = erase
-            mask = Image.new("RGB", image.size, (0, 0, 0))
-            draw = ImageDraw.Draw(mask)
-            for box in sensitive_boxes:
-                draw.rectangle(box, fill=(255, 255, 255))
-
-            # SD requires fixed input dimensions; restore original size after
-            img_sd = image.resize(inpaint_size, Image.LANCZOS)
-            mask_sd = mask.resize(inpaint_size, Image.NEAREST)
-
-            inpainted = _inpaint_pipe(
-                prompt=inpaint_prompt,
-                image=img_sd,
-                mask_image=mask_sd,
-                num_inference_steps=inpaint_steps,
-            ).images[0]
-
-            final_image = inpainted.resize(image.size, Image.LANCZOS)
-            summary = (
-                f"Image masked via generative inpainting "
-                f"({len(sensitive_boxes)} region(s), {inpaint_size[0]}×{inpaint_size[1]} canvas)."
-            )
+        policy = "MASK"
+        print(
+            f"  [MASK] Sensitive coverage {sensitive_ratio:.1%} — "
+            f"painting {len(sensitive_boxes)} region(s) solid black..."
+        )
+        final_image = image.copy()
+        draw = ImageDraw.Draw(final_image)
+        for box in sensitive_boxes:
+            draw.rectangle(box, fill=(0, 0, 0))
+        summary = (
+            f"Image masked — {len(sensitive_boxes)} sensitive region(s) "
+            f"painted solid black (original resolution preserved)."
+        )
 
     # ── ABSTRACT ───────────────────────────────────────────────────────────────
     else:
