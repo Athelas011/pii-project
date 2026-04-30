@@ -148,14 +148,14 @@ def initialize_models(
         _SENSITIVE_QUERIES = visual_queries
 
     # 1. Text PII filter
-    # trust_remote_code=True is required: openai/privacy-filter uses a custom
-    # architecture (openai_privacy_filter) not registered in transformers by default.
+    # dslim/bert-base-NER is a universally-supported standard model (no custom
+    # architecture). openai/privacy-filter was removed because its architecture
+    # (openai_privacy_filter) is not registered in any public transformers release.
     _pii_filter = pipeline(
         task="token-classification",
-        model="openai/privacy-filter",
+        model="dslim/bert-base-NER",
         aggregation_strategy="simple",
         device=0 if _device == "cuda" else -1,
-        trust_remote_code=True,
     )
 
     # 2. Ephemeral OCR reader
