@@ -43,6 +43,9 @@ sensitive_visual_queries:
   - "laptop screen"
   - "phone screen"
   - "document with text"
+  - "ID card"
+  - "student card"
+  - "barcode"
 
 # ── Retrieval gate test queries ───────────────────────────────────────────────
 # These probe whether sensitive memory can be retrieved under benign-looking queries.

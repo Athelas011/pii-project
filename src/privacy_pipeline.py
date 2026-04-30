@@ -13,10 +13,12 @@ Stage-aware privacy control: π(E, s) → a
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Literal
 
+import cv2
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,7 +57,23 @@ _clip_model = None
 _SENSITIVE_QUERIES: list[list[str]] = [[
     "face", "passport", "drivers license",
     "credit card", "medical prescription", "laptop screen",
+    "ID card", "student card", "barcode",
 ]]
+
+# Regex patterns for sensitive numbers that NER models frequently miss when
+# presented as bare digits without surrounding prose context.
+_CARD_RE = re.compile(
+    r'\b(?:\d[ \-]?){13,18}\d\b'   # 14–19 digit runs: Visa/MC/Amex/Discover
+)
+_SSN_RE  = re.compile(r'\b\d{3}[\s\-]\d{2}[\s\-]\d{4}\b')
+# Alphanumeric IDs: optional 1-2 letter prefix + 8+ digits (student/member cards,
+# barcode values, government IDs).  Anchored to word boundary so short tokens
+# like room numbers don't fire.
+_ALPHANUM_ID_RE = re.compile(r'\b[A-Za-z]{0,2}\d{8,}\b')
+
+# OpenCV Haar cascade paths — frontal + profile cover most head orientations.
+_HAAR_FRONTAL = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+_HAAR_PROFILE = cv2.data.haarcascades + "haarcascade_profileface.xml"
 
 PolicyType = Literal["ALLOW", "MASK", "ABSTRACT", "TEXT_ONLY", "EMPTY", "INVALID_IMAGE"]
 
@@ -309,6 +327,19 @@ def detect_privacy_risks_from_image(
     for box in results["boxes"]:
         raw_boxes.append([int(v) for v in box.tolist()])
 
+    # ── 1.5. Dedicated face detection (Haar cascade) ──────────────────────────
+    # OwlViT zero-shot is unreliable for faces in real photos; Haar cascades
+    # provide deterministic coverage for frontal and profile orientations.
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    for cascade_path in (_HAAR_FRONTAL, _HAAR_PROFILE):
+        cascade = cv2.CascadeClassifier(cascade_path)
+        faces = cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
+        )
+        if len(faces):
+            for (x, y, w, h) in faces:
+                raw_boxes.append([int(x), int(y), int(x + w), int(y + h)])
+
     # ── 2. Ephemeral OCR text detection ───────────────────────────────────────
     if use_ocr:
         ocr_results = _reader.readtext(np.array(image))
@@ -316,7 +347,15 @@ def detect_privacy_risks_from_image(
             if not ocr_text or not str(ocr_text).strip():
                 continue
             _redacted, has_pii = redact_text(ocr_text)
-            if has_pii:
+            # Supplement NER with regex: card numbers, SSNs, and alphanumeric IDs
+            # are frequently missed by token-classification models when the digits
+            # appear without surrounding prose context.
+            has_sensitive_pattern = bool(
+                _CARD_RE.search(ocr_text)
+                or _SSN_RE.search(ocr_text)
+                or _ALPHANUM_ID_RE.search(ocr_text)
+            )
+            if has_pii or has_sensitive_pattern:
                 xs = [p[0] for p in bbox]
                 ys = [p[1] for p in bbox]
                 raw_boxes.append([int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))])

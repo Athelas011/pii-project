@@ -20,14 +20,22 @@ Reference: WebPII (Zhao 2026) shows text-extraction baselines achieve
 """
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
+import cv2
 import numpy as np
 import torch
 from PIL import Image
 
 PILImage = Any
+
+_CARD_RE        = re.compile(r'\b(?:\d[ \-]?){13,18}\d\b')
+_SSN_RE         = re.compile(r'\b\d{3}[\s\-]\d{2}[\s\-]\d{4}\b')
+_ALPHANUM_ID_RE = re.compile(r'\b[A-Za-z]{0,2}\d{8,}\b')
+_HAAR_FRONTAL = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+_HAAR_PROFILE = cv2.data.haarcascades + "haarcascade_profileface.xml"
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -50,11 +58,12 @@ def run_mode_b_visual_only(
     device: str,
     queries: list[list[str]] | None = None,
 ) -> dict:
-    """Mode B: OwlViT zero-shot detection only; no OCR, no text filter."""
+    """Mode B: OwlViT + Haar face detection; no OCR, no text filter."""
     t0 = time.perf_counter()
     if image is None:
         return _result("B", "Visual-Only (OwlViT)", "", [], False, False, 0.0)
     boxes = _owl_detect(image, owl_processor, owl_model, device, queries)
+    boxes += _haar_faces(image)
     boxes = _post_process_boxes(boxes, image)
     return _result("B", "Visual-Only (OwlViT)", "", boxes, False,
                    len(boxes) > 0, time.perf_counter() - t0)
@@ -69,11 +78,12 @@ def run_mode_c_visual_ocr(
     pii_filter,
     queries: list[list[str]] | None = None,
 ) -> dict:
-    """Mode C: OwlViT + ephemeral OCR; text input not redacted."""
+    """Mode C: OwlViT + Haar faces + ephemeral OCR; text input not redacted."""
     t0 = time.perf_counter()
     if image is None:
         return _result("C", "Visual + OCR", "", [], False, False, 0.0)
     boxes = _owl_detect(image, owl_processor, owl_model, device, queries)
+    boxes += _haar_faces(image)
     boxes += _ocr_boxes(image, ocr_reader, pii_filter)
     boxes = _post_process_boxes(boxes, image)
     return _result("C", "Visual + OCR", "", boxes, False,
@@ -90,13 +100,14 @@ def run_mode_d_full(
     ocr_reader,
     queries: list[list[str]] | None = None,
 ) -> dict:
-    """Mode D: full pipeline — text PII + OwlViT + ephemeral OCR."""
+    """Mode D: full pipeline — text PII + OwlViT + Haar faces + ephemeral OCR."""
     t0 = time.perf_counter()
     redacted, has_text_pii = _redact(text, pii_filter)
     if image is None:
         return _result("D", "Full Pipeline (Ours)", redacted, [],
                        has_text_pii, False, time.perf_counter() - t0)
     boxes = _owl_detect(image, owl_processor, owl_model, device, queries)
+    boxes += _haar_faces(image)
     boxes += _ocr_boxes(image, ocr_reader, pii_filter)
     boxes = _post_process_boxes(boxes, image)
     return _result("D", "Full Pipeline (Ours)", redacted, boxes,
@@ -188,13 +199,32 @@ def _owl_detect(
     return [[int(v) for v in box.tolist()] for box in results["boxes"]]
 
 
+def _haar_faces(image: PILImage) -> list[list[int]]:
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2GRAY)
+    boxes = []
+    for cascade_path in (_HAAR_FRONTAL, _HAAR_PROFILE):
+        cascade = cv2.CascadeClassifier(cascade_path)
+        faces = cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30)
+        )
+        if len(faces):
+            for (x, y, w, h) in faces:
+                boxes.append([int(x), int(y), int(x + w), int(y + h)])
+    return boxes
+
+
 def _ocr_boxes(image: PILImage, reader, pii_filter) -> list[list[int]]:
     boxes = []
     for bbox, text, _prob in reader.readtext(np.array(image)):
         if not text or not str(text).strip():
             continue
         _, has_pii = _redact(str(text), pii_filter)
-        if has_pii:
+        has_sensitive_pattern = bool(
+            _CARD_RE.search(text)
+            or _SSN_RE.search(text)
+            or _ALPHANUM_ID_RE.search(text)
+        )
+        if has_pii or has_sensitive_pattern:
             xs = [p[0] for p in bbox]
             ys = [p[1] for p in bbox]
             boxes.append([int(min(xs)), int(min(ys)), int(max(xs)), int(max(ys))])
