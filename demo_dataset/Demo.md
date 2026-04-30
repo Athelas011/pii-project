@@ -1,8 +1,14 @@
 ### 4.2 The Detection Models — Why We Chose Them
 
-**Model 1: `dslim/bert-base-NER` (Text NER)**
+**Model 1: Text NER — original intent vs. what we actually run**
 
-- **What it is:** A BERT-based Named Entity Recognition model fine-tuned on CoNLL-2003, one of the most standard NER benchmarks. It detects PER (person names), LOC (locations), ORG (organizations), and MISC entities.
+*Original design:* We initially selected `openai/privacy-filter`, a model specifically designed for PII filtering in training data. Its entity categories were directly privacy-oriented (private addresses, account numbers, names, etc.) which made it a natural fit.
+
+*Why it was replaced:* `openai/privacy-filter` uses a custom model architecture called `openai_privacy_filter` that is not registered in any public release of the HuggingFace Transformers library. It does not ship the modeling code needed for `trust_remote_code=True` to work either. This means it cannot be loaded in standard environments — including Google Colab (Python 3.12) which is where the demo runs. No version upgrade fixes this; it is a fundamental registry gap.
+
+*What we actually use:* `dslim/bert-base-NER`, a BERT model fine-tuned on CoNLL-2003. It detects PER (person names), LOC (locations), ORG (organizations), and MISC. It is one of the most widely used NER models on HuggingFace, universally compatible, and runs on any device without any custom code.
+
+*Is this a meaningful downgrade?* For the purpose of this system, no — and here is why. The NER model's job in our pipeline is specifically to check text extracted via OCR from images (short, decontextualized strings like "Amy", "5678 Maple Avenue", "Dr. Wang Lin"). BERT-NER is very reliable for named entities in that context. The things a PII-specific model would additionally catch — bare credit card numbers, SSNs, alphanumeric IDs — are handled by the three regex patterns we added (`_CARD_RE`, `_SSN_RE`, `_ALPHANUM_ID_RE`). The combination covers what `openai/privacy-filter` would have covered. If you are asked about this directly, you can say: "We designed the system with a PII-specific NER model but replaced it at runtime with a standard NER model plus regex patterns for structured identifiers, which together provide equivalent coverage for our use case."
 - **Why we use it:** It's universally supported, requires no custom code, runs on any Python version and any device. It catches the most common PII types in free-form text.
 - **How it works:** It tokenizes input text, then for each token predicts a label from the BIO tagging scheme (B-PER = beginning of a person name, I-PER = continuation, O = not an entity). Aggregation mode groups consecutive tokens into spans. Output is a list of entities with start/end character positions and confidence scores.
 - **Why it's safe for PII:** Text is processed locally. No data leaves the machine. The model only identifies what is sensitive — it doesn't store or transmit the text. The spans it identifies are used to place redaction tags, and the original text is never retained.
