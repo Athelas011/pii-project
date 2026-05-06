@@ -4,7 +4,7 @@ Runs four queries designed to trigger cross-modal leakage, raw URL exposure,
 and PII retrieval. No privacy controls are applied at any stage.
 
 Usage:
-    python src/demos/baseline_demo.py
+    python baseline_demo.py
 """
 
 from __future__ import annotations
